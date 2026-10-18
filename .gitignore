@@ -34,3 +34,7 @@ yarn-error.log*
 
 # agent artifacts
 .agent_tmp/
+
+# preview artifact — generated copy of /index.html so the standalone
+# default page is reachable at /index.html from the Next.js server.
+/public/index.html
