@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scrollytelling.ai — Turn static content into scroll-driven stories</title>
+    <meta
+      name="description"
+      content="Combine text, 3D graphics, data visualizations and media into seamless, interactive web experiences — no code required."
+    />
+    <meta name="theme-color" content="#0A0B0E" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="app/icon.svg" type="image/svg+xml" />
+
+    <style>
+      /* ==========================================================================
+         Scrollytelling.ai — standalone default page
+         Self-contained: no build step, no external dependencies.
+         Mirrors the design tokens in app/globals.css.
+         ========================================================================== */
+      :root {
+        --obsidian: #0a0b0e;
+        --canvas: #12141a;
+        --canvas-2: #171a22;
+        --line: #232733;
+        --line-soft: #1b1f29;
+        --indigo: #6366f1;
+        --emerald: #10b981;
+        --violet: #8b5cf6;
+        --offwhite: #f9fafb;
+        --muted: #9ca3af;
+        --faint: #6b7280;
+        --font-display: "Plus Jakarta Sans", "Syne", "Space Grotesk", system-ui, sans-serif;
+        --font-sans: "Inter", "Geist Sans", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+        --radius: 1.25rem;
+        --maxw: 1240px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        border-color: var(--line);
+      }
+
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: var(--obsidian);
+        color: var(--offwhite);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-display);
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      ::selection {
+        background: rgba(99, 102, 241, 0.45);
+        color: var(--offwhite);
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--obsidian);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 99px;
+        border: 2px solid var(--obsidian);
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #333949;
+      }
+
+      .wrap {
+        width: 100%;
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      /* ---------------- utilities ---------------- */
+      .mono {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+
+      .gradient-text {
+        background: linear-gradient(100deg, #818cf8 0%, #a78bfa 45%, #34d399 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .glass {
+        background: rgba(23, 26, 34, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+      }
+
+      .grid-bg {
+        background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 56px 56px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        border-radius: 99px;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease,
+          border-color 0.3s ease;
+        white-space: nowrap;
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .btn-primary {
+        color: #fff;
+        background: linear-gradient(100deg, var(--indigo) 0%, var(--violet) 55%, #7c6cf6 100%);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 40px -14px rgba(99, 102, 241, 0.85);
+        background-size: 180% 100%;
+      }
+      .btn-primary:hover {
+        background-position: 100% 0;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 20px 50px -14px rgba(139, 92, 246, 0.95);
+      }
+      .btn-ghost {
+        color: var(--offwhite);
+        background: rgba(23, 26, 34, 0.6);
+        border-color: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(18px);
+      }
+      .btn-ghost:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .btn-sm {
+        padding: 0.55rem 1.05rem;
+        font-size: 0.8125rem;
+      }
+
+      /* ---------------- header ---------------- */
+      header.site {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 50;
+        transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
+        border-bottom: 1px solid transparent;
+      }
+      header.site.scrolled {
+        background: rgba(10, 11, 14, 0.72);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-bottom-color: rgba(255, 255, 255, 0.07);
+      }
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.0625rem;
+        letter-spacing: -0.02em;
+      }
+      .brand svg {
+        transition: transform 0.5s ease;
+      }
+      .brand:hover svg {
+        transform: rotate(-6deg);
+      }
+      nav.primary {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      nav.primary a {
+        padding: 0.5rem 0.85rem;
+        border-radius: 99px;
+        font-size: 0.84375rem;
+        font-weight: 500;
+        color: var(--muted);
+        transition: color 0.2s ease, background 0.2s ease;
+      }
+      nav.primary a:hover {
+        color: var(--offwhite);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .login {
+        padding: 0.5rem 0.85rem;
+        font-size: 0.84375rem;
+        font-weight: 500;
+        color: var(--muted);
+        transition: color 0.2s ease;
+      }
+      .login:hover {
+        color: var(--offwhite);
+      }
+      .burger {
+        display: none;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 99px;
+        align-items: center;
+        justify-content: center;
+        color: var(--offwhite);
+        background: rgba(23, 26, 34, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+      }
+      /* scroll progress bar */
+      .progress-track {
+        height: 2px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+      }
+      .progress-bar {
+        height: 100%;
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: left;
+        background: linear-gradient(90deg, var(--indigo), var(--violet) 55%, var(--emerald));
+      }
+
+      /* ---------------- hero ---------------- */
+      .hero {
+        position: relative;
+        min-height: 100svh;
+        display: flex;
+        align-items: center;
+        padding: 9rem 0 5rem;
+        overflow: hidden;
+      }
+      .hero-glow {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(130px);
+      }
+      .blob-1 {
+        top: -8rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 42rem;
+        height: 42rem;
+        background: rgba(99, 102, 241, 0.2);
+      }
+      .blob-2 {
+        top: 30%;
+        right: 4%;
+        width: 28rem;
+        height: 28rem;
+        background: rgba(139, 92, 246, 0.16);
+      }
+      .blob-3 {
+        bottom: 0;
+        left: 8%;
+        width: 26rem;
+        height: 26rem;
+        background: rgba(16, 185, 129, 0.13);
+      }
+      .hero-grid {
+        position: relative;
+        display: grid;
+        gap: 4rem;
+        align-items: center;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        border-radius: 99px;
+        padding: 0.4rem 1rem 0.4rem 0.45rem;
+        border: 1px solid rgba(99, 102, 241, 0.28);
+        background: rgba(23, 26, 34, 0.6);
+        backdrop-filter: blur(18px);
+        margin-bottom: 1.75rem;
+      }
+      .badge-dot {
+        display: grid;
+        place-items: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        background: rgba(99, 102, 241, 0.22);
+        color: var(--indigo);
+      }
+      .badge .mono {
+        color: var(--muted);
+        letter-spacing: 0.1em;
+      }
+      h1.hero-title {
+        font-size: clamp(2.5rem, 5.6vw, 4.5rem);
+        letter-spacing: -0.035em;
+        line-height: 0.98;
+      }
+      .hero-sub {
+        margin-top: 1.75rem;
+        max-width: 34rem;
+        font-size: 1.03125rem;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      .hero-sub strong {
+        color: var(--offwhite);
+        font-weight: 500;
+      }
+      .hero-cta {
+        margin-top: 2.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.875rem;
+      }
+      .stats {
+        margin-top: 2.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+      }
+      .stat-value {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+
+      /* hero preview card */
+      .preview {
+        position: relative;
+        border-radius: 2rem;
+        padding: 0.75rem;
+        background: rgba(23, 26, 34, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 40px 120px -30px rgba(99, 102, 241, 0.5);
+        transform: rotate(-5deg);
+        max-width: 33rem;
+        margin: 0 auto;
+      }
+      .preview-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.25rem 0.5rem 0.75rem;
+      }
+      .dots {
+        display: flex;
+        gap: 0.375rem;
+      }
+      .dot {
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 50%;
+      }
+      .dot.r {
+        background: rgba(248, 113, 113, 0.7);
+      }
+      .dot.a {
+        background: rgba(251, 191, 36, 0.7);
+      }
+      .dot.g {
+        background: rgba(16, 185, 129, 0.7);
+      }
+      .live {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        color: var(--emerald);
+      }
+      .live-dot {
+        width: 0.375rem;
+        height: 0.375rem;
+        border-radius: 50%;
+        background: var(--emerald);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+      .preview-stage {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        border-radius: 1rem;
+        overflow: hidden;
+        background: radial-gradient(110% 90% at 25% 25%, #1e1b4b 0%, #0a0b0e 62%);
+      }
+      .preview-stage .grid-bg {
+        position: absolute;
+        inset: 0;
+        opacity: 0.35;
+        background-position-x: calc(var(--p, 0) * 100%);
+      }
+      .orb {
+        position: absolute;
+        right: 14%;
+        top: 20%;
+        width: 7rem;
+        height: 7rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--indigo), var(--violet) 55%, var(--emerald));
+        transform: translateY(calc(var(--p, 0) * 26px)) scale(calc(0.85 + var(--p, 0) * 0.25));
+        filter: blur(0.5px);
+      }
+      .orb::after {
+        content: "";
+        position: absolute;
+        inset: 0.5rem;
+        border-radius: 50%;
+        background: rgba(10, 11, 14, 0.72);
+      }
+      .orb::before {
+        content: "";
+        position: absolute;
+        inset: 1.5rem;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        z-index: 2;
+      }
+      .preview-copy {
+        position: absolute;
+        inset: 50% 0 auto 0;
+        transform: translateY(-50%);
+        padding: 0 1.75rem;
+      }
+      .preview-copy .mono {
+        color: var(--indigo);
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+      .preview-copy h4 {
+        font-size: 1.1875rem;
+        max-width: 16rem;
+      }
+      .preview-meta {
+        position: absolute;
+        left: 1.75rem;
+        right: 1.75rem;
+        bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        color: var(--faint);
+      }
+      .preview-meta b {
+        color: var(--indigo);
+        font-weight: 500;
+      }
+
+      /* ---------------- marquee ---------------- */
+      .marquee {
+        border-top: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+        padding: 1.5rem 0;
+        overflow: hidden;
+        mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+      }
+      .marquee-track {
+        display: flex;
+        gap: 3rem;
+        width: max-content;
+        animation: marquee 34s linear infinite;
+      }
+      .marquee-track span {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      @keyframes marquee {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* ---------------- sections ---------------- */
+      section {
+        position: relative;
+      }
+      .section-pad {
+        padding: 7rem 0;
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--indigo);
+      }
+      .section-title {
+        margin-top: 1rem;
+        font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+        max-width: 42rem;
+      }
+      .section-body {
+        margin-top: 1.25rem;
+        max-width: 40rem;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+
+      /* pinned scrolly demo */
+      .pin-track {
+        position: relative;
+      }
+      .pin-stage {
+        position: sticky;
+        top: 0;
+        height: 100svh;
+        display: flex;
+        align-items: flex-end;
+        overflow: hidden;
+      }
+      .pin-media {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+      .layer {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .layer.active {
+        opacity: 1;
+      }
+      .layer-a {
+        background: radial-gradient(120% 100% at 20% 20%, #1e1b4b 0%, #0a0b0e 70%);
+      }
+      .layer-b {
+        background: radial-gradient(120% 100% at 80% 30%, #2e1065 0%, #0a0b0e 70%);
+      }
+      .layer-c {
+        background: radial-gradient(120% 100% at 50% 80%, #064e3b 0%, #0a0b0e 70%);
+      }
+      .layer-grid {
+        position: absolute;
+        inset: 0;
+        opacity: 0.3;
+        background-position: calc(var(--p, 0) * -120px) 0;
+      }
+
+      .pin-scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient(to top, var(--obsidian) 6%, rgba(10, 11, 14, 0.35) 55%, transparent);
+      }
+      .pin-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        padding: 0 0 6rem;
+      }
+      .step {
+        display: none;
+      }
+      .step.active {
+        display: block;
+        animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .step-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 99px;
+        padding: 0.3rem 0.85rem;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        margin-bottom: 1.25rem;
+      }
+      .step-tag span {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .step-tag i {
+        width: 0.375rem;
+        height: 0.375rem;
+        border-radius: 50%;
+        background: var(--indigo);
+      }
+      .step h3 {
+        font-size: clamp(1.75rem, 3.6vw, 3rem);
+        max-width: 30rem;
+      }
+      .step p {
+        margin-top: 1.1rem;
+        max-width: 30rem;
+        color: var(--muted);
+      }
+      .readout {
+        margin-top: 1.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        color: var(--faint);
+      }
+      .readout b {
+        color: var(--indigo);
+        font-weight: 500;
+      }
+      .readout .sep {
+        width: 1px;
+        height: 0.75rem;
+        background: var(--line);
+      }
+      .step-dots {
+        position: absolute;
+        right: 1.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .step-dots i {
+        width: 0.375rem;
+        height: 0.375rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+      }
+      .step-dots i.on {
+        background: var(--indigo);
+        transform: scale(1.5);
+      }
+      .spacer {
+        height: 300vh;
+      }
+
+      /* feature cards */
+      .cards {
+        margin-top: 3.5rem;
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+      }
+      .card {
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        background: rgba(18, 20, 26, 0.5);
+        border: 1px solid var(--line);
+        transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
+      }
+      .card:hover {
+        border-color: rgba(255, 255, 255, 0.16);
+        background: rgba(23, 26, 34, 0.7);
+        transform: translateY(-3px);
+      }
+      .card-icon {
+        display: grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--indigo);
+        margin-bottom: 1.25rem;
+      }
+      .card h3 {
+        font-size: 1.0625rem;
+      }
+      .card p {
+        margin-top: 0.65rem;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+      .card .tag {
+        display: block;
+        margin-top: 1.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+
+      /* routes / quick links */
+      .routes {
+        margin-top: 3.5rem;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+      }
+      .route {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        background: rgba(18, 20, 26, 0.5);
+        border: 1px solid var(--line);
+        transition: border-color 0.3s ease, background 0.3s ease;
+      }
+      .route:hover {
+        border-color: rgba(99, 102, 241, 0.45);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .route strong {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .route small {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        color: var(--faint);
+      }
+      .route svg {
+        color: var(--indigo);
+        flex-shrink: 0;
+        transition: transform 0.25s ease;
+      }
+      .route:hover svg {
+        transform: translateX(4px);
+      }
+
+      /* cta */
+      .cta {
+        position: relative;
+        border-radius: 2rem;
+        padding: 4.5rem 2.5rem;
+        text-align: center;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: rgba(18, 20, 26, 0.6);
+      }
+      .cta::before {
+        content: "";
+        position: absolute;
+        inset: -50% 0 auto 0;
+        height: 30rem;
+        background: radial-gradient(closest-side, rgba(99, 102, 241, 0.28), transparent);
+        pointer-events: none;
+      }
+      .cta h2 {
+        position: relative;
+        font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+        max-width: 34rem;
+        margin: 0 auto;
+      }
+      .cta p {
+        position: relative;
+        margin: 1.25rem auto 0;
+        max-width: 30rem;
+        color: var(--muted);
+      }
+      .cta-actions {
+        position: relative;
+        margin-top: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.875rem;
+        justify-content: center;
+      }
+
+      /* footer */
+      footer.site {
+        border-top: 1px solid var(--line);
+        margin-top: 6rem;
+        padding: 4rem 0 2rem;
+        background: rgba(10, 11, 14, 0.6);
+      }
+      .footer-grid {
+        display: grid;
+        gap: 3rem;
+        grid-template-columns: 1.6fr repeat(4, 1fr);
+      }
+      .footer-brand p {
+        margin-top: 1.25rem;
+        max-width: 20rem;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+      .footer-col h4 {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin-bottom: 1.25rem;
+      }
+      .footer-col ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .footer-col a {
+        font-size: 0.875rem;
+        color: var(--muted);
+        transition: color 0.2s ease;
+      }
+      .footer-col a:hover {
+        color: var(--offwhite);
+      }
+      .footer-bottom {
+        margin-top: 3.5rem;
+        padding-top: 1.75rem;
+        border-top: 1px solid var(--line-soft);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--faint);
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .status i {
+        width: 0.375rem;
+        height: 0.375rem;
+        border-radius: 50%;
+        background: var(--emerald);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+
+      /* ---------------- responsive ---------------- */
+      @media (min-width: 900px) {
+        .hero-grid {
+          grid-template-columns: 1.05fr 1fr;
+        }
+      }
+      @media (max-width: 1024px) {
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .footer-brand {
+          grid-column: 1 / -1;
+        }
+      }
+      @media (max-width: 860px) {
+        nav.primary,
+        .login {
+          display: none;
+        }
+        .burger {
+          display: inline-flex;
+        }
+        header.site.open nav.primary {
+          display: flex;
+          position: absolute;
+          inset: 100% 0 auto 0;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.25rem;
+          padding: 1rem 1.5rem 1.5rem;
+          background: rgba(10, 11, 14, 0.96);
+          backdrop-filter: blur(18px);
+          border-bottom: 1px solid var(--line);
+        }
+        header.site.open nav.primary a {
+          padding: 0.75rem 1rem;
+        }
+        .preview {
+          transform: none;
+        }
+        .section-pad {
+          padding: 4.5rem 0;
+        }
+      }
+      @media (max-width: 640px) {
+        .footer-grid {
+          grid-template-columns: 1fr;
+        }
+        .step-dots {
+          display: none;
+        }
+        .cta {
+          padding: 3rem 1.5rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .marquee-track,
+        .live-dot,
+        .status i {
+          animation: none;
+        }
+        .step.active {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ============================ HEADER ============================ -->
+    <header class="site" id="site-header">
+      <div class="wrap">
+        <div class="nav-inner">
+          <a class="brand" href="#top" aria-label="Scrollytelling.ai home">
+            <svg viewBox="0 0 32 32" width="30" height="30" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="brand" x1="0" y1="0" x2="32" y2="32">
+                  <stop offset="0%" stop-color="#6366F1" />
+                  <stop offset="55%" stop-color="#8B5CF6" />
+                  <stop offset="100%" stop-color="#10B981" />
+                </linearGradient>
+              </defs>
+              <rect x="1.5" y="1.5" width="29" height="29" rx="9" stroke="url(#brand)" stroke-width="1.6" />
+              <rect x="12.5" y="7" width="7" height="12" rx="3.5" stroke="url(#brand)" stroke-width="1.8" />
+              <path d="M16 10.2v2.6" stroke="url(#brand)" stroke-width="1.8" stroke-linecap="round" />
+              <path
+                d="M12.4 23.4 16 26.4l3.6-3"
+                stroke="url(#brand)"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>Scrollytelling<span style="color: var(--indigo)">.ai</span></span>
+          </a>
+
+          <nav class="primary" aria-label="Primary">
+            <a href="#platform">Platform</a>
+            <a href="/showcase">Templates</a>
+            <a href="#showcase">Showcase</a>
+            <a href="/docs">Docs</a>
+            <a href="/pricing">Pricing</a>
+          </nav>
+
+          <div class="nav-right">
+            <a class="login" href="#login">Log In</a>
+            <a class="btn btn-primary btn-sm" href="/editor">Create Scrolly</a>
+            <button class="burger" id="burger" aria-label="Toggle navigation" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+    </header>
+
+    <main id="top">
+      <!-- ============================ HERO ============================ -->
+      <section class="hero">
+        <div class="hero-glow">
+          <div class="grid-bg" style="position: absolute; inset: 0; opacity: 0.4"></div>
+          <div class="blob blob-1"></div>
+          <div class="blob blob-2"></div>
+          <div class="blob blob-3"></div>
+        </div>
+
+        <div class="wrap">
+          <div class="hero-grid">
+            <div>
+              <div class="badge">
+                <span class="badge-dot">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                    <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8" />
+                  </svg>
+                </span>
+                <span class="mono">Scroll-native storytelling · v3.0</span>
+              </div>
+
+              <h1 class="hero-title">
+                Turn Static Content<br />into Scroll-Driven<br />
+                <span class="gradient-text">Immersive Stories.</span>
+              </h1>
+
+              <p class="hero-sub">
+                Combine text, 3D graphics, data visualizations, and media into seamless, interactive
+                web experiences — <strong>no code required</strong>.
+              </p>
+
+              <div class="hero-cta">
+                <a class="btn btn-primary" href="/editor">
+                  Create Scrolly
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 12h15" /><path d="m13 6 6 6-6 6" />
+                  </svg>
+                </a>
+                <a class="btn btn-ghost" href="/showcase">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                    <path d="M7 4.5v15l12-7.5-12-7.5Z" />
+                  </svg>
+                  Watch a story
+                </a>
+              </div>
+
+              <div class="stats">
+                <div>
+                  <div class="stat-value">31k+</div>
+                  <div class="mono" style="margin-top: 0.35rem">Stories published</div>
+                </div>
+                <div>
+                  <div class="stat-value">60fps</div>
+                  <div class="mono" style="margin-top: 0.35rem">Scroll-linked render</div>
+                </div>
+                <div>
+                  <div class="stat-value">0 LOC</div>
+                  <div class="mono" style="margin-top: 0.35rem">To go live</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live scroll preview widget -->
+            <div class="preview" id="preview">
+              <div class="preview-bar">
+                <div class="dots"><i class="dot r"></i><i class="dot a"></i><i class="dot g"></i></div>
+                <span class="mono" style="text-transform: none; letter-spacing: 0">scrollytelling.ai/preview</span>
+                <span class="live"><i class="live-dot"></i>LIVE</span>
+              </div>
+              <div class="preview-stage" id="preview-stage">
+                <div class="grid-bg"></div>
+                <div class="orb"></div>
+                <div class="preview-copy">
+                  <span class="mono">pin 01 / 04</span>
+                  <h4>Copy stays pinned while the media breathes.</h4>
+                </div>
+                <div class="preview-meta">
+                  <span>progress <b id="preview-progress">0%</b></span>
+                  <span>ScrollTrigger</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ MARQUEE ============================ -->
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+          <span>GSAP ScrollTrigger</span><span>react-three-fiber</span><span>Framer Motion</span>
+          <span>Lottie</span><span>WebGL Shaders</span><span>D3 Charts</span>
+          <span>Pinned Sections</span><span>Scroll Progress</span><span>Custom Domains</span>
+          <span>Embeddable Components</span>
+          <span>GSAP ScrollTrigger</span><span>react-three-fiber</span><span>Framer Motion</span>
+          <span>Lottie</span><span>WebGL Shaders</span><span>D3 Charts</span>
+          <span>Pinned Sections</span><span>Scroll Progress</span><span>Custom Domains</span>
+          <span>Embeddable Components</span>
+        </div>
+      </div>
+
+      <!-- ============================ PINNED DEMO ============================ -->
+      <section id="platform">
+        <div class="wrap section-pad" style="padding-bottom: 3rem">
+          <p class="eyebrow">The platform</p>
+          <h2 class="section-title">Three pinned mechanics. One continuous scroll.</h2>
+          <p class="section-body">
+            Scroll through the next three chapters. Each one is a live, production-grade module — the
+            same code you'd export from the Studio.
+          </p>
+        </div>
+
+        <div class="pin-track" id="pin-track">
+          <div class="pin-stage">
+            <div class="pin-media">
+              <div class="layer layer-a active"></div>
+              <div class="layer layer-b"></div>
+              <div class="layer layer-c"></div>
+              <div class="grid-bg layer-grid" style="z-index: 2"></div>
+            </div>
+            <div class="pin-scrim"></div>
+            <div class="step-dots">
+              <i class="on"></i><i></i><i></i>
+            </div>
+
+            <div class="pin-content">
+              <div class="wrap">
+                <div class="step active">
+                  <div class="step-tag"><i></i><span>Module 01 · Pinned text &amp; dynamic media</span></div>
+                  <h3>Copy holds still. The world moves behind it.</h3>
+                  <p>
+                    Pinned text blocks stay anchored to the viewport while hosted images and video
+                    cross-fade underneath — driven purely by scroll distance, never by a timer.
+                  </p>
+                </div>
+
+                <div class="step">
+                  <div class="step-tag"><i></i><span>Module 02 · Data visualization &amp; charts</span></div>
+                  <h3>Charts that build themselves as you read.</h3>
+                  <p>
+                    Bars rise from the baseline once their trigger enters the viewport, and map nodes
+                    connect in sequence — the geography tells the story before a label is read.
+                  </p>
+                </div>
+
+                <div class="step">
+                  <div class="step-tag"><i></i><span>Module 03 · 3D rotation &amp; explosion</span></div>
+                  <h3>A scene bound to the scrollbar.</h3>
+                  <p>
+                    Feed scroll progress straight into a WebGL render loop. Rotation, tilt and camera
+                    dolly all read from a single normalised value, so the narrative resolves cleanly.
+                  </p>
+                </div>
+
+                <div class="readout">
+                  <span>scrollProgress: <b id="pin-progress">0.00</b></span>
+                  <span class="sep"></span>
+                  <span>step <b id="pin-step">1</b>/3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="spacer" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- ============================ FEATURES ============================ -->
+      <section id="showcase">
+        <div class="wrap section-pad">
+          <p class="eyebrow">Scrollytelling modules</p>
+          <h2 class="section-title">Everything a scroll story needs, composed in layers.</h2>
+          <p class="section-body">
+            Drop in a module, bind it to a scroll trigger, and it stays perfectly in sync with the
+            reader — on any device.
+          </p>
+
+          <div class="cards">
+            <article class="card">
+              <div class="card-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 14h18" />
+                </svg>
+              </div>
+              <h3>Pinned Text &amp; Dynamic Media</h3>
+              <p>Hold copy in place while background images and video transition smoothly as a function of scroll distance.</p>
+              <span class="tag">pin · parallax</span>
+            </article>
+
+            <article class="card">
+              <div class="card-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+                </svg>
+              </div>
+              <h3>Data Visualization &amp; Charts</h3>
+              <p>Scroll-triggered charts that build as the reader descends: bars rise, map nodes connect, counters resolve.</p>
+              <span class="tag">charts · maps</span>
+            </article>
+
+            <article class="card">
+              <div class="card-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z" /><path d="M3 7l9 5 9-5M12 22V12" />
+                </svg>
+              </div>
+              <h3>3D Model Explosion / Rotation</h3>
+              <p>Bind a WebGL scene's rotation and shard spread directly to scroll progress 0 → 1. No keyframe babysitting.</p>
+              <span class="tag">webgl · r3f</span>
+            </article>
+
+            <article class="card">
+              <div class="card-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m8 16-4-4 4-4M16 8l4 4-4 4M14 4l-4 16" />
+                </svg>
+              </div>
+              <h3>Export Anywhere</h3>
+              <p>Ship as an embeddable <code style="font-family: var(--font-mono); font-size: 0.8em">&lt;scrolly-embed&gt;</code> web component, a React hook, or a standalone bundle.</p>
+              <span class="tag">embed · react · html</span>
+            </article>
+
+            <article class="card">
+              <div class="card-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /><path d="M15 4v16" />
+                </svg>
+              </div>
+              <h3>No-Code Studio</h3>
+              <p>A split-screen timeline, live canvas and inspector. Drag scenes, set triggers, tune easing curves.</p>
+              <span class="tag">studio · timeline</span>
+            </article>
+
+            <article class="card">
+              <div class="card-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="7" y="2" width="10" height="20" rx="3" /><path d="M11 18h2" />
+                </svg>
+              </div>
+              <h3>Responsive &amp; Touch-Ready</h3>
+              <p>Every pinned section degrades to a swipe-driven fallback on mobile, so the narrative reads the same everywhere.</p>
+              <span class="tag">mobile · a11y</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ ROUTES ============================ -->
+      <section>
+        <div class="wrap" style="padding-bottom: 6rem">
+          <p class="eyebrow">Explore the app</p>
+          <h2 class="section-title">Jump straight in.</h2>
+          <p class="section-body">
+            This is the standalone default page. The full Next.js application serves these routes.
+          </p>
+
+          <div class="routes">
+            <a class="route" href="/showcase">
+              <span><strong>Showcase Gallery</strong><small>/showcase</small></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></svg>
+            </a>
+            <a class="route" href="/editor">
+              <span><strong>Scrolly Studio</strong><small>/editor</small></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></svg>
+            </a>
+            <a class="route" href="/docs">
+              <span><strong>Docs &amp; API Guide</strong><small>/docs</small></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></svg>
+            </a>
+            <a class="route" href="/pricing">
+              <span><strong>Pricing</strong><small>/pricing</small></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ CTA ============================ -->
+      <section>
+        <div class="wrap">
+          <div class="cta">
+            <p class="eyebrow">Start building</p>
+            <h2 style="margin-top: 1rem">Your next story scrolls itself.</h2>
+            <p>
+              Publish your first scrollytelling piece in an afternoon. Bring the narrative — the
+              Studio brings the motion.
+            </p>
+            <div class="cta-actions">
+              <a class="btn btn-primary" href="/editor">Create Scrolly</a>
+              <a class="btn btn-ghost" href="/docs">Read the docs</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================ FOOTER ============================ -->
+    <footer class="site">
+      <div class="wrap">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="brand">
+              <svg viewBox="0 0 32 32" width="26" height="26" fill="none" aria-hidden="true">
+                <rect x="1.5" y="1.5" width="29" height="29" rx="9" stroke="url(#brand)" stroke-width="1.6" />
+                <rect x="12.5" y="7" width="7" height="12" rx="3.5" stroke="url(#brand)" stroke-width="1.8" />
+                <path d="M16 10.2v2.6" stroke="url(#brand)" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M12.4 23.4 16 26.4l3.6-3" stroke="url(#brand)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Scrollytelling<span style="color: var(--indigo)">.ai</span></span>
+            </div>
+            <p>
+              Turn static content into scroll-driven immersive stories. Combine text, 3D graphics,
+              data visualizations and media into seamless interactive web experiences.
+            </p>
+          </div>
+
+          <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#platform">Platform overview</a></li>
+              <li><a href="/editor">Scrolly Studio</a></li>
+              <li><a href="#platform">Charts &amp; data viz</a></li>
+              <li><a href="#platform">3D scenes</a></li>
+              <li><a href="/pricing">Pricing</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Templates</h4>
+            <ul>
+              <li><a href="/showcase">Data journalism</a></li>
+              <li><a href="/showcase">Product launches</a></li>
+              <li><a href="/showcase">Annual reports</a></li>
+              <li><a href="/showcase">Case studies</a></li>
+              <li><a href="/showcase">Educational timelines</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Developers</h4>
+            <ul>
+              <li><a href="/docs">Scrollytelling API</a></li>
+              <li><a href="/docs#embed">&lt;scrolly-embed&gt;</a></li>
+              <li><a href="/docs#hooks">useScrollStep hook</a></li>
+              <li><a href="/docs#bundle">Standalone bundle</a></li>
+              <li><a href="/docs#changelog">Changelog</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Community</h4>
+            <ul>
+              <li><a href="#top">Creator community</a></li>
+              <li><a href="/showcase">Template gallery</a></li>
+              <li><a href="#showcase">Showcase of the week</a></li>
+              <li><a href="https://x.com" rel="noopener noreferrer">X / Twitter</a></li>
+              <li><a href="https://linkedin.com" rel="noopener noreferrer">LinkedIn</a></li>
+              <li><a href="https://github.com" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://discord.com" rel="noopener noreferrer">Discord</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© <span id="year">2026</span> Scrollytelling.ai — All rights reserved.</span>
+          <span style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center">
+            <a href="#top" style="transition: color 0.2s">Privacy Policy</a>
+            <a href="#top" style="transition: color 0.2s">Terms</a>
+            <span class="status"><i></i>All systems operational</span>
+          </span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      /* ======================================================================
+         Standalone scroll engine — no dependencies.
+         Drives: header state, top progress bar, hero preview widget,
+         and the pinned three-step demo (progress + step switching).
+         ==================================================================== */
+      (function () {
+        "use strict";
+
+        var header = document.getElementById("site-header");
+        var progressBar = document.getElementById("progress-bar");
+        var preview = document.getElementById("preview");
+        var previewStage = document.getElementById("preview-stage");
+        var previewProgress = document.getElementById("preview-progress");
+        var pinTrack = document.getElementById("pin-track");
+        var pinProgress = document.getElementById("pin-progress");
+        var pinStepEl = document.getElementById("pin-step");
+        var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+        var layers = Array.prototype.slice.call(document.querySelectorAll(".layer:not(.layer-grid)"));
+        var dots = Array.prototype.slice.call(document.querySelectorAll(".step-dots i"));
+        var burger = document.getElementById("burger");
+        var yearEl = document.getElementById("year");
+
+        if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+        /* mobile nav */
+        if (burger) {
+          burger.addEventListener("click", function () {
+            var open = header.classList.toggle("open");
+            burger.setAttribute("aria-expanded", open ? "true" : "false");
+          });
+          Array.prototype.forEach.call(
+            document.querySelectorAll("nav.primary a"),
+            function (a) {
+              a.addEventListener("click", function () {
+                header.classList.remove("open");
+                burger.setAttribute("aria-expanded", "false");
+              });
+            }
+          );
+        }
+
+        function clamp01(n) {
+          return n < 0 ? 0 : n > 1 ? 1 : n;
+        }
+
+        /* Renders only when a value actually changes (avoids needless layout). */
+        var lastPreview = -1;
+        var lastPin = -1;
+        var lastStep = -1;
+        var ticking = false;
+
+        function render() {
+          ticking = false;
+          var doc = document.documentElement;
+          var scrollTop = window.scrollY || doc.scrollTop;
+          var max = doc.scrollHeight - window.innerHeight;
+          var pageProgress = max > 0 ? clamp01(scrollTop / max) : 0;
+
+          /* header + top bar */
+          if (header) header.classList.toggle("scrolled", scrollTop > 24);
+          if (progressBar) progressBar.style.transform = "scaleX(" + pageProgress + ")";
+
+          /* hero preview widget — reacts as the page is scrolled */
+          if (preview) {
+            var rect = preview.getBoundingClientRect();
+            var vh = window.innerHeight;
+            var p = clamp01((vh - rect.top) / (vh + rect.height));
+            var rounded = Math.round(p * 100) / 100;
+            if (rounded !== lastPreview) {
+              lastPreview = rounded;
+              if (previewStage) previewStage.style.setProperty("--p", String(rounded));
+              if (previewProgress) previewProgress.textContent = Math.round(rounded * 100) + "%";
+            }
+          }
+
+          /* pinned demo — progress across the pinned track */
+          if (pinTrack) {
+            var trackRect = pinTrack.getBoundingClientRect();
+            var total = pinTrack.offsetHeight - window.innerHeight;
+            var scrolled = clamp01(-trackRect.top / (total > 0 ? total : 1));
+            var stepIndex = Math.min(steps.length - 1, Math.floor(scrolled * steps.length));
+
+            var pinRounded = Math.round(scrolled * 100) / 100;
+            if (pinRounded !== lastPin) {
+              lastPin = pinRounded;
+              if (pinProgress) pinProgress.textContent = pinRounded.toFixed(2);
+              var gridLayer = document.querySelector(".layer-grid");
+              if (gridLayer) gridLayer.style.setProperty("--p", String(pinRounded));
+            }
+
+            if (stepIndex !== lastStep) {
+              lastStep = stepIndex;
+              steps.forEach(function (el, i) {
+                el.classList.toggle("active", i === stepIndex);
+              });
+              layers.forEach(function (el, i) {
+                el.classList.toggle("active", i === stepIndex);
+              });
+              dots.forEach(function (el, i) {
+                el.classList.toggle("on", i === stepIndex);
+              });
+              if (pinStepEl) pinStepEl.textContent = String(stepIndex + 1);
+            }
+          }
+        }
+
+        function onScroll() {
+          if (!ticking) {
+            ticking = true;
+            window.requestAnimationFrame(render);
+          }
+        }
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        render();
+      })();
+    </script>
+  </body>
+</html>
